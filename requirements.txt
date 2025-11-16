@@ -1,0 +1,27 @@
+# Основной фреймворк
+fastapi
+
+# ASGI сервер для запуска FastAPI
+uvicorn[standard]
+
+# ORM для базы данных
+sqlalchemy
+
+# Драйвер для MySQL
+PyMySQL
+
+# Pydantic
+pydantic
+pydantic-settings
+
+# Для хеширования паролей
+passlib[bcrypt]
+
+# Для JWT токенов (авторизация)
+python-jose[cryptography]
+
+# Для Фильтра Блума
+pybloom-live
+
+# Для WebSocket-соединений (чаты)
+websockets

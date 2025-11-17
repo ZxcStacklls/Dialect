@@ -12,7 +12,7 @@ from app.db import schemas # Нам нужна схема TokenData
 # Мы используем bcrypt как основную схему.
 # deprecated="auto" означает, что passlib будет автоматически
 # обновлять хеши, если мы в будущем сменим алгоритм.
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 # --- 2. Функции для работы с Паролями ---

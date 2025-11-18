@@ -64,3 +64,25 @@ def get_my_chats(
         response_chats.append(chat_dto)
         
     return response_chats
+
+
+@router.post("/{chat_id}/users", status_code=status.HTTP_201_CREATED)
+def add_user(
+    chat_id: int,
+    user_id: int, # Кого добавляем (передаем через Query параметр ?user_id=...)
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(database.get_db)
+):
+    """Добавить пользователя в группу."""
+    chat_service.add_user_to_chat(db, chat_id, user_id, requester_id=current_user.id)
+    return {"message": "User added successfully"}
+
+@router.delete("/{chat_id}/users/me", status_code=status.HTTP_200_OK)
+def leave_chat(
+    chat_id: int,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(database.get_db)
+):
+    """Покинуть чат."""
+    chat_service.remove_user_from_chat(db, chat_id, user_id=current_user.id, requester_id=current_user.id)
+    return {"message": "You left the chat"}

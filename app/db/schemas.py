@@ -84,6 +84,11 @@ class MessageCreate(BaseModel):
     chat_id: int
     content: bytes # Клиент шлет зашифрованные байты (или base64, тогда тут str)
 
+class MessageUpdate(BaseModel):
+    """Схема для редактирования сообщения"""
+    message_id: int
+    content: bytes # Новое зашифрованное содержимое
+
 class Message(MessageBase):
     """Схема для отображения сообщения (получение по WebSocket)"""
     model_config = ConfigDict(from_attributes=True)

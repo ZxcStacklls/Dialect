@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import Optional
 
 from app.db import models, schemas
@@ -46,3 +47,27 @@ def create_user(db: Session, user_data: schemas.UserCreate) -> models.User:
     db.refresh(db_user) # Обновляем объект, чтобы получить ID из БД
     
     return db_user
+
+
+def search_users(
+    db: Session, 
+    query_str: str, 
+    limit: int = 10
+) -> list[models.User]:
+    """
+    Ищет пользователей по совпадению в username, имени или фамилии.
+    """
+    if not query_str:
+        return []
+        
+    # Используем % для поиска подстроки (SQL LIKE)
+    search_pattern = f"%{query_str}%"
+    
+    return db.query(models.User).filter(
+        or_(
+            models.User.username.like(search_pattern),
+            models.User.first_name.like(search_pattern),
+            models.User.last_name.like(search_pattern),
+            models.User.phone_number.like(search_pattern)
+        )
+    ).limit(limit).all()

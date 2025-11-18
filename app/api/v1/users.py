@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Dict
+from typing import Dict, List
 
 from app.db import database, models, schemas
 from app.api.deps import get_current_active_user
@@ -65,3 +65,23 @@ def check_username_availability(
     # Если фильтр сказал False, is_available остается True, и мы не лезем в БД.
 
     return {"is_available": is_available}
+
+
+@router.get("/search", response_model=List[schemas.UserPublic])
+def search_for_users(
+    q: str,
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(database.get_db)
+):
+    """
+    Поиск пользователей по запросу 'q'.
+    Пример: /api/v1/users/search?q=tim
+    """
+    if len(q) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Запрос должен быть не короче 3 символов"
+        )
+        
+    users = user_service.search_users(db, query_str=q)
+    return users

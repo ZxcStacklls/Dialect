@@ -9,7 +9,6 @@ from app.services import chat_service
 router = APIRouter(
     prefix="/v1/chats",
     tags=["Chats"],
-    # Все эндпоинты в этом файле требуют авторизованного юзера
     dependencies=[Depends(get_current_active_user)]
 )
 
@@ -26,12 +25,8 @@ def create_chat(
     добавляется в список участников.
     """
     new_chat = chat_service.create_new_chat(db, creator=current_user, chat_data=chat_data)
-    
-    # Нам нужно вручную заполнить поле participants для Pydantic схемы,
-    # так как сервис возвращает модель SQLAlchemy
     participants = [link.user for link in new_chat.participant_links]
     
-    # Конвертируем в Pydantic-схему (немного вручную)
     chat_response = schemas.Chat(
         id=new_chat.id,
         chat_type=new_chat.chat_type,
@@ -117,3 +112,35 @@ def rename_chat(
         db, chat_id, new_name=name, requester_id=current_user.id
     )
     return {"message": "Chat renamed successfully"}
+
+
+@router.delete("/{chat_id}", status_code=status.HTTP_200_OK)
+def delete_chat_endpoint(
+    chat_id: int,
+    for_everyone: bool = Query(False), # ?for_everyone=true/false
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(database.get_db)
+):
+    """
+    Удалить чат целиком.
+    - for_everyone=false (default): Удалить у себя (выйти).
+    - for_everyone=true: Удалить у всех (удалить чат физически).
+    """
+    chat_service.delete_chat(db, chat_id, current_user.id, for_everyone)
+    return {"message": "Chat deleted"}
+
+
+@router.delete("/{chat_id}/messages", status_code=status.HTTP_200_OK)
+def clear_history_endpoint(
+    chat_id: int,
+    for_everyone: bool = Query(False),
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(database.get_db)
+):
+    """
+    Очистить историю сообщений.
+    - for_everyone=false: Скрыть старые сообщения только для себя.
+    - for_everyone=true: Удалить сообщения физически.
+    """
+    chat_service.clear_chat_history(db, chat_id, current_user.id, for_everyone)
+    return {"message": "History cleared"}

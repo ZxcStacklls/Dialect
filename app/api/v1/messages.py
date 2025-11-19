@@ -7,6 +7,7 @@ from app.db import database, schemas, models
 from app.services import message_service
 from app.services.connection_manager import manager
 from app.core import security
+from app.api.deps import get_current_active_user
 
 router = APIRouter(
     prefix="/v1/messages",
@@ -30,9 +31,10 @@ def get_chat_history(
     chat_id: int,
     limit: int = 50,
     offset: int = 0,
+    current_user: models.User = Depends(get_current_active_user), # <-- ДОБАВИЛИ
     db: Session = Depends(database.get_db)
 ):
-    return message_service.get_chat_history(db, chat_id, limit, offset)
+    return message_service.get_chat_history(db, chat_id, current_user.id, limit, offset)
 
 
 # 🟢 1. WebSocket Эндпоинт (Живое общение)

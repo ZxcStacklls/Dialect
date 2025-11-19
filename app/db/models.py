@@ -60,11 +60,11 @@ class ChatParticipant(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
-    
-    # Кастомный никнейм в конкретной группе
     custom_nickname = Column(String(100), nullable=True)
-    
     joined_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+    
+    # ⭐ НОВОЕ ПОЛЕ: Время последней очистки истории
+    last_cleared_at = Column(TIMESTAMP, nullable=True) 
 
     __table_args__ = (UniqueConstraint('user_id', 'chat_id', name='_user_chat_uc'),)
 

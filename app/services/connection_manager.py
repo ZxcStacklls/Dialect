@@ -26,6 +26,10 @@ class ConnectionManager:
             await connection.send_json(message)
             return True
         return False
+    
+    def is_user_online(self, user_id: int) -> bool:
+        """Проверяет, подключен ли пользователь."""
+        return user_id in self.active_connections
 
 # Создаем глобальный экземпляр менеджера
 manager = ConnectionManager()

@@ -20,18 +20,28 @@ class UserCreate(UserBase):
     password: str  # Пароль в открытом виде, будет хеширован в сервисе
     public_key: str
 
+class UserUpdate(BaseModel):
+    """Схема для обновления профиля"""
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    bio: Optional[str] = None
+
 class UserPublic(BaseModel):
-    """
-    Публичная схема пользователя (то, что видят другие)
-    Никогда не включаем сюда номер телефона или дату регистрации.
-    """
-    model_config = ConfigDict(from_attributes=True) # Для чтения из SQLAlchemy
+    model_config = ConfigDict(from_attributes=True)
     
     id: int
     username: Optional[str] = None
     first_name: str
     last_name: Optional[str] = None
-    public_key: str # Открытый ключ нужен другим для шифрования
+    public_key: str
+    
+    # Профиль
+    avatar_url: Optional[str] = None
+    bio: Optional[str] = None
+    
+    # Активность
+    last_seen_at: datetime
+    is_online: bool = False
 
 class UserInDB(UserBase):
     """Полная схема пользователя (как в БД)"""

@@ -5,6 +5,12 @@ from typing import Optional
 from app.db import models, schemas
 from app.core.security import get_password_hash
 
+from sqlalchemy.sql import func
+from fastapi import UploadFile
+import shutil
+import uuid
+import os
+
 # --- READ-операции (Получение данных) ---
 
 def get_user(db: Session, user_id: int) -> Optional[models.User]:
@@ -71,3 +77,49 @@ def search_users(
             models.User.phone_number.like(search_pattern)
         )
     ).limit(limit).all()
+
+
+def update_last_seen(db: Session, user_id: int):
+    """Обновляет время последнего посещения на текущее."""
+    user = get_user(db, user_id)
+    if user:
+        user.last_seen_at = func.now()
+        db.commit()
+
+def update_user_profile(db: Session, user_id: int, update_data: schemas.UserUpdate) -> models.User:
+    """Обновляет текстовые поля профиля."""
+    user = get_user(db, user_id)
+    if not user: return None
+    
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
+        setattr(user, key, value)
+        
+    db.commit()
+    db.refresh(user)
+    return user
+
+def upload_avatar(db: Session, user_id: int, file: UploadFile) -> str:
+    """Сохраняет аватарку и возвращает URL."""
+    user = get_user(db, user_id)
+    
+    # Папка для загрузок
+    if not os.path.exists("uploads"):
+        os.makedirs("uploads")
+
+    # Генерируем имя файла
+    file_ext = file.filename.split(".")[-1]
+    file_name = f"avatar_{user_id}_{uuid.uuid4()}.{file_ext}"
+    file_path = f"uploads/{file_name}"
+    
+    # Сохраняем
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    # URL для доступа (статика)
+    url = f"/static/{file_name}"
+    
+    user.avatar_url = url
+    db.commit()
+    db.refresh(user)
+    return url

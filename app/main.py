@@ -1,7 +1,9 @@
 import logging
 from fastapi import FastAPI, Depends
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
+import os   
 
 # --- Импорты наших компонентов ---
 from app.db import database, models
@@ -19,6 +21,8 @@ from app.api.v1 import messages as messages_v1
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+if not os.path.exists("uploads"):
+    os.makedirs("uploads")
 
 # --- События "при старте" / "при выключении" ---
 
@@ -85,6 +89,9 @@ app.include_router(chats_v1.router, prefix="/api")
 
 # Роутер для сообщений (/api/v1/messages/...)
 app.include_router(messages_v1.router, prefix="/api")
+
+# Подключаем раздачу файлов из папки uploads/
+app.mount("/static", StaticFiles(directory="uploads"), name="static")
 
 
 # --- Тестовый эндпоинт ---

@@ -4,7 +4,7 @@ from typing import Dict, List, Any
 from pydantic import ValidationError
 
 from app.db import database, schemas, models
-from app.services import message_service
+from app.services import message_service, user_service
 from app.services.connection_manager import manager
 from app.core import security
 from app.api.deps import get_current_active_user
@@ -219,6 +219,9 @@ async def websocket_endpoint(
 
     except WebSocketDisconnect:
         manager.disconnect(user_id)
+        user_service.update_last_seen(db, user_id)
+        
     except Exception as e:
         print(f"WebSocket Error: {e}")
         manager.disconnect(user_id)
+        user_service.update_last_seen(db, user_id)

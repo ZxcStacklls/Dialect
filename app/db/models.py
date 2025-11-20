@@ -29,11 +29,20 @@ class User(Base):
     last_name = Column(String(100), nullable=True)
     password_hash = Column(String(255), nullable=False)
     public_key = Column(TEXT, nullable=False)
+    
+    # --- ПРОФИЛЬ (Базовый) ---
+    avatar_url = Column(String(255), nullable=True)  # Ссылка на файл аватарки
+    bio = Column(String(500), nullable=True)         # Описание "Обо мне"
+    
+    # --- АКТИВНОСТЬ ---
+    # Время последнего выхода из сети.
+    # Если пользователь онлайн (есть WebSocket), это поле игнорируется клиентом.
+    last_seen_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
+
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
 
     chat_links = relationship("ChatParticipant", back_populates="user")
     sent_messages = relationship("Message", back_populates="sender")
-    # Связь для чатов, где юзер является владельцем
     owned_chats = relationship("Chat", back_populates="owner")
 
 
@@ -43,10 +52,7 @@ class Chat(Base):
     id = Column(Integer, primary_key=True, index=True)
     chat_type = Column(Enum(ChatTypeEnum), nullable=False, default=ChatTypeEnum.private)
     chat_name = Column(String(255), nullable=True)
-    
-    # Владелец группы (для личных чатов может быть NULL или игнорироваться)
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    
     created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
 
     participant_links = relationship("ChatParticipant", back_populates="chat")
@@ -62,8 +68,6 @@ class ChatParticipant(Base):
     chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
     custom_nickname = Column(String(100), nullable=True)
     joined_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
-    
-    # ⭐ НОВОЕ ПОЛЕ: Время последней очистки истории
     last_cleared_at = Column(TIMESTAMP, nullable=True) 
 
     __table_args__ = (UniqueConstraint('user_id', 'chat_id', name='_user_chat_uc'),)
@@ -81,8 +85,6 @@ class Message(Base):
     content = Column(BLOB, nullable=False)
     sent_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     status = Column(Enum(MessageStatusEnum), nullable=False, default=MessageStatusEnum.sent)
-    
-    # Закреплено ли сообщение
     is_pinned = Column(Boolean, default=False, nullable=False)
 
     chat = relationship("Chat", back_populates="messages")
